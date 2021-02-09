@@ -175,17 +175,17 @@ namespace AmplifyShaderEditor
 			base.CommonInit( uniqueId );
 			AddInputPort( WirePortDataType.SAMPLER2D, false, "Top", -1, MasterNodePortCategory.Fragment, 0 );
 			m_inputPorts[ 0 ].CreatePortRestrictions( WirePortDataType.SAMPLER2D, WirePortDataType.SAMPLER2DARRAY );
-			AddInputPort( WirePortDataType.FLOAT, true, "Top Index", -1, MasterNodePortCategory.Fragment, 5 );
+			AddInputPort( WirePortDataType.FLOAT, false, "Top Index", -1, MasterNodePortCategory.Fragment, 5 );
 			AddInputPort( WirePortDataType.SAMPLER2D, false, "Middle", -1, MasterNodePortCategory.Fragment, 1 );
 			m_inputPorts[ 2 ].CreatePortRestrictions( WirePortDataType.SAMPLER2D, WirePortDataType.SAMPLER2DARRAY );
-			AddInputPort( WirePortDataType.FLOAT, true, "Mid Index", -1, MasterNodePortCategory.Fragment, 6 );
+			AddInputPort( WirePortDataType.FLOAT, false, "Mid Index", -1, MasterNodePortCategory.Fragment, 6 );
 			AddInputPort( WirePortDataType.SAMPLER2D, false, "Bottom", -1, MasterNodePortCategory.Fragment, 2 );
 			m_inputPorts[ 4 ].CreatePortRestrictions( WirePortDataType.SAMPLER2D, WirePortDataType.SAMPLER2DARRAY );
-			AddInputPort( WirePortDataType.FLOAT, true, "Bot Index", -1, MasterNodePortCategory.Fragment, 7 );
-			AddInputPort( WirePortDataType.FLOAT3, true, "Pos", -1, MasterNodePortCategory.Fragment, 9 );
-			AddInputPort( WirePortDataType.FLOAT3, true, "Scale", -1, MasterNodePortCategory.Fragment, 8 );
-			AddInputPort( WirePortDataType.FLOAT2, true, "Tiling", -1, MasterNodePortCategory.Fragment, 3 );
-			AddInputPort( WirePortDataType.FLOAT, true, "Falloff", -1, MasterNodePortCategory.Fragment, 4 );
+			AddInputPort( WirePortDataType.FLOAT, false, "Bot Index", -1, MasterNodePortCategory.Fragment, 7 );
+			AddInputPort( WirePortDataType.FLOAT3, false, "Pos", -1, MasterNodePortCategory.Fragment, 9 );
+			AddInputPort( WirePortDataType.FLOAT3, false, "Scale", -1, MasterNodePortCategory.Fragment, 8 );
+			AddInputPort( WirePortDataType.FLOAT2, false, "Tiling", -1, MasterNodePortCategory.Fragment, 3 );
+			AddInputPort( WirePortDataType.FLOAT, false, "Falloff", -1, MasterNodePortCategory.Fragment, 4 );
 			AddOutputColorPorts( "RGBA" );
 			m_useInternalPortData = true;
 			m_topTexPort = InputPorts[ 0 ];
@@ -1056,6 +1056,9 @@ namespace AmplifyShaderEditor
 
 		public override string GenerateShaderForOutput( int outputId, ref MasterNodeDataCollector dataCollector, bool ignoreLocalvar )
 		{
+			if( m_outputPorts[ 0 ].IsLocalValue( dataCollector.PortCategory ) )
+				return GetOutputColorItem( 0, outputId, m_outputPorts[ 0 ].LocalValue( dataCollector.PortCategory ) );
+
 			ParentGraph outsideGraph = UIUtils.CurrentWindow.OutsideGraph;
 
 			dataCollector.AddPropertyNode( m_topTexture );
@@ -1346,15 +1349,22 @@ namespace AmplifyShaderEditor
 				call = dataCollector.AddFunctions( callHeader, samplingTriplanar, texTop + ssTop, pos, norm, falloff, tiling, normalScale, topIndex );
 			else
 				call = dataCollector.AddFunctions( callHeader, samplingTriplanar, texTop + ssTop, texMid + ssMid, texBot + ssBot, pos, norm, falloff, tiling, normalScale, "float3(" + topIndex + "," + midIndex + "," + botIndex + ")" );
-			dataCollector.AddToLocalVariables( dataCollector.PortCategory, UniqueId, type + " triplanar" + OutputId + " = " + call + ";" );
+			string triplanarVarName = "triplanar" + OutputId;
+
+			dataCollector.AddToLocalVariables( dataCollector.PortCategory, UniqueId, type + " "+ triplanarVarName + " = " + call + ";" );
 			if( m_normalCorrection && m_normalSpace == ViewSpace.Tangent )
 			{
-				dataCollector.AddToLocalVariables( dataCollector.PortCategory, UniqueId, "float3 tanTriplanarNormal" + OutputId + " = mul( " + worldToTangent + ", triplanar" + OutputId + " );" );
-				return GetOutputVectorItem( 0, outputId, "tanTriplanarNormal" + OutputId );
+				string tanTriplanarVarName = "tanTriplanarNormal" + OutputId;
+
+				dataCollector.AddToLocalVariables( dataCollector.PortCategory, UniqueId, "float3 " + tanTriplanarVarName + " = mul( " + worldToTangent + ", "+ triplanarVarName + " );" );
+
+				m_outputPorts[ 0 ].SetLocalValue( tanTriplanarVarName, dataCollector.PortCategory );
+
+				return GetOutputVectorItem( 0, outputId, tanTriplanarVarName );
 			}
 			else
 			{
-				return GetOutputVectorItem( 0, outputId, "triplanar" + OutputId );
+				return GetOutputVectorItem( 0, outputId, triplanarVarName );
 			}
 		}
 

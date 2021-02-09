@@ -1803,15 +1803,15 @@ namespace AmplifyShaderEditor
 				m_billboardOpHelper.FillDataCollectorWithInternalData( ref m_currentDataCollector );
 			}
 
-
-			if( !m_renderingOptionsOpHelper.UseDefaultShadowCaster && 
-				( ( m_castShadows && ( m_alphaToCoverage || m_inlineAlphaToCoverage.Active ) ) ||
-				( m_castShadows && hasOpacity ) ||
-				( m_castShadows && ( m_currentDataCollector.UsingWorldNormal || m_currentDataCollector.UsingWorldReflection || m_currentDataCollector.UsingViewDirection ) ) ||
-				( m_castShadows && m_inputPorts[ m_discardPortId ].Available && m_inputPorts[ m_discardPortId ].IsConnected && m_currentLightModel == StandardShaderLightModel.CustomLighting ) ))
-				m_customShadowCaster = true;
-			else
-				m_customShadowCaster = false;
+			m_customShadowCaster = CustomShadowCaster;
+			//if( !m_renderingOptionsOpHelper.UseDefaultShadowCaster && 
+			//	( ( m_castShadows && ( m_alphaToCoverage || m_inlineAlphaToCoverage.Active ) ) ||
+			//	( m_castShadows && hasOpacity ) ||
+			//	( m_castShadows && ( m_currentDataCollector.UsingWorldNormal || m_currentDataCollector.UsingWorldReflection || m_currentDataCollector.UsingViewDirection ) ) ||
+			//	( m_castShadows && m_inputPorts[ m_discardPortId ].Available && m_inputPorts[ m_discardPortId ].IsConnected && m_currentLightModel == StandardShaderLightModel.CustomLighting ) ))
+			//	m_customShadowCaster = true;
+			//else
+			//	m_customShadowCaster = false;
 
 			//m_customShadowCaster = true;
 
@@ -2039,6 +2039,7 @@ namespace AmplifyShaderEditor
 						if( m_currentDataCollector.DirtyPragmas/* && !m_customShadowCaster */)
 							ShaderBody += m_currentDataCollector.Pragmas;
 
+						CheckSamplingMacrosFlag();
 						m_currentDataCollector.AddASEMacros();
 						if( m_currentDataCollector.DirtyAdditionalDirectives )
 							ShaderBody += m_currentDataCollector.StandardAdditionalDirectives;
@@ -3314,5 +3315,19 @@ namespace AmplifyShaderEditor
 		public OutlineOpHelper OutlineHelper { get { return m_outlineHelper; } }
 		public float OpacityMaskClipValue { get { return m_opacityMaskClipValue; } }
 		public InlineProperty InlineOpacityMaskClipValue { get { return m_inlineOpacityMaskClipValue; } set { m_inlineOpacityMaskClipValue = value; } }
+		public bool CustomShadowCaster
+		{
+			get
+			{
+				bool hasOpacity = m_inputPorts[ m_opacityPortId ].IsConnected;
+				return 
+					( !m_renderingOptionsOpHelper.UseDefaultShadowCaster &&
+					( ( m_castShadows && ( m_alphaToCoverage || m_inlineAlphaToCoverage.Active ) ) ||
+					( m_castShadows && hasOpacity ) ||
+					( m_castShadows && ( m_currentDataCollector.UsingWorldNormal || m_currentDataCollector.UsingWorldReflection || m_currentDataCollector.UsingViewDirection ) ) ||
+					( m_castShadows && m_inputPorts[ m_discardPortId ].Available && m_inputPorts[ m_discardPortId ].IsConnected && m_currentLightModel == StandardShaderLightModel.CustomLighting ) ) );
+			}
+		}
+		public override AvailableShaderTypes CurrentMasterNodeCategory { get { return AvailableShaderTypes.SurfaceShader; } }
 	}
 }

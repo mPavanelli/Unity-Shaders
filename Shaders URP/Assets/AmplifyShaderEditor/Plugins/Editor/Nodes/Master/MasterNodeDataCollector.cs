@@ -15,12 +15,14 @@ namespace AmplifyShaderEditor
 		public int OrderIndex;
 		public string PropertyName;
 		public WirePortDataType DataType;
+		public bool IsDirective;
 
-		public PropertyDataCollector( int nodeId, string propertyName, int orderIndex = -1 )
+		public PropertyDataCollector( int nodeId, string propertyName, int orderIndex = -1, bool isDirective = false )
 		{
 			NodeId = nodeId;
 			PropertyName = propertyName;
 			OrderIndex = orderIndex;
+			IsDirective = isDirective;
 		}
 	}
 
@@ -521,10 +523,10 @@ namespace AmplifyShaderEditor
 		{
 			if( string.IsNullOrEmpty( value ) )
 				return;
-
+					
 			if( !m_inputDict.ContainsKey( value ) )
 			{
-				m_inputDict.Add( value, new PropertyDataCollector( nodeId, value ) );
+				m_inputDict.Add( value, new PropertyDataCollector( nodeId, value ,-1, !addSemiColon) );
 				m_inputList.Add( m_inputDict[ value ] );
 
 				m_input += "\t\t\t" + value + ( ( addSemiColon ) ? ( ";\n" ) : "\n" );
@@ -1236,13 +1238,69 @@ namespace AmplifyShaderEditor
 			return AddLocalVariable( nodeId, value );
 		}
 
+		private bool UsedLocalVariable( string value )
+		{
+			switch( m_portCategory )
+			{
+				case MasterNodePortCategory.Vertex:
+				case MasterNodePortCategory.Tessellation:
+				{
+					if( m_vertexLocalVariablesDict.ContainsKey( value ) )
+					{
+						return true;
+					}
+				}
+				break;
+				case MasterNodePortCategory.Fragment:
+				case MasterNodePortCategory.Debug:
+				{
+					if( m_usingCustomOutput )
+					{
+						if( m_customOutputDict.ContainsKey( value ) )
+						{
+							return true;
+						}
+					}
+					else
+					{
+						if( m_localVariablesDict.ContainsKey( value ) )
+						{
+							return true;
+						}
+					}
+				}
+				break;
+			}
+			return false;
+		}
+
+		private bool ValidadeLocalVariable( PrecisionType precisionType, WirePortDataType type, string varName, string varValue, ref string result )
+		{
+			Array enumValues = Enum.GetValues( typeof( PrecisionType ) );
+			foreach( PrecisionType currPrecision in enumValues)
+			{
+				string value = UIUtils.PrecisionWirePortToTypeValue( currPrecision, type, varName ) + " = " + varValue + ";";
+				if( UsedLocalVariable( value ) )
+					return false;
+
+				if( precisionType == currPrecision )
+					result = value;
+			}
+
+			return true;
+		}
+
 		public bool AddLocalVariable( int nodeId, PrecisionType precisionType, WirePortDataType type, string varName, string varValue )
 		{
 			if( string.IsNullOrEmpty( varName ) || string.IsNullOrEmpty( varValue ) )
 				return false;
 
-			string value = UIUtils.PrecisionWirePortToTypeValue( precisionType, type, varName ) + " = " + varValue + ";";
-			return AddLocalVariable( nodeId, value );
+			//string value = UIUtils.PrecisionWirePortToTypeValue( precisionType, type, varName ) + " = " + varValue + ";";
+			string value = string.Empty;
+			if( ValidadeLocalVariable(  precisionType, type, varName, varValue, ref value))
+				return AddLocalVariable( nodeId, value );
+
+			return false;
 		}
 
 		public bool AddLocalVariable( int nodeId, string name, string value, bool ignoreDuplicates = false , bool addSemiColon = false )

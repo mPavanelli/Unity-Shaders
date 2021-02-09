@@ -74,6 +74,27 @@ namespace AmplifyShaderEditor
 			"#define ASE_TEXTURE2D_ARRAY_PARAMS(textureName) textureName, sampler##textureName\n"
 		};*/
 
+		public readonly static List<string> UnityNativeInspectors = new List<string>
+		{
+			"Rendering.HighDefinition.LightingShaderGraphGUI",
+			"Rendering.HighDefinition.HDUnlitGUI",
+			"UnityEditor.Rendering.HighDefinition.HDLitGUI",
+			"UnityEditor.ShaderGraph.PBRMasterGUI",
+			"UnityEditor.Rendering.HighDefinition.DecalGUI",
+			"UnityEditor.Rendering.HighDefinition.FabricGUI",
+			"UnityEditor.Experimental.Rendering.HDPipeline.HDLitGUI",
+			"Rendering.HighDefinition.DecalGUI",
+			"Rendering.HighDefinition.LitShaderGraphGUI",
+		};
+
+		public readonly static Dictionary<string, string> CustomInspectorHD7To10 = new Dictionary<string, string>
+		{
+			{ "UnityEditor.Rendering.HighDefinition.DecalGUI","Rendering.HighDefinition.DecalGUI"},
+			{ "UnityEditor.Rendering.HighDefinition.FabricGUI","Rendering.HighDefinition.LightingShaderGraphGUI"},
+			{ "UnityEditor.Rendering.HighDefinition.HDLitGUI","Rendering.HighDefinition.LitShaderGraphGUI"},
+			{ "UnityEditor.Experimental.Rendering.HDPipeline.HDLitGUI","Rendering.HighDefinition.LitShaderGraphGUI"},
+		};
+
 		public readonly static string CustomASEStandardSamplerParams = "#define ASE_TEXTURE_PARAMS(textureName) textureName\n";
 		public readonly static string[] CustomASESRPTextureArrayMacros = 
 		{
@@ -151,7 +172,10 @@ namespace AmplifyShaderEditor
 			{ TextureType.Texture3D, WirePortDataType.SAMPLER3D},
 			{ TextureType.Cube,WirePortDataType.SAMPLERCUBE},
 			{ TextureType.Texture2DArray,WirePortDataType.SAMPLER2DARRAY},
+			{ TextureType.ProceduralTexture,WirePortDataType.SAMPLER2D},
 		};
+
+		public readonly static string SamplingMacrosDirective = "#define ASE_USING_SAMPLING_MACROS 1";
 
 		// STANDARD
 		public readonly static string[] CustomASEStandarSamplingMacrosHelper =
@@ -275,7 +299,7 @@ namespace AmplifyShaderEditor
 			{ TextureType.Cube,"texCUBE{0}( {1}, {2} )"},
 			{ TextureType.Texture2DArray,"tex2DArray{0}( {1}, {2} )"}
 		};
-
+		public readonly static char LineFeedSeparator = '$';
 		public readonly static char SemiColonSeparator = '@';
 		public readonly static string AppDataFullName = "appdata_full";
 		public readonly static string CustomAppDataFullName = "appdata_full_custom";
@@ -451,6 +475,7 @@ namespace AmplifyShaderEditor
 		public readonly static string SubTitleRefNameFormatStr = "Ref( {0} )";
 
 		public readonly static string CodeWrapper = "( {0} )";
+		public readonly static string InlineCodeWrapper = "{{\n{0}\n}}";
 
 		public readonly static string NodesDumpFormat = "{0}:,{1},{2}\n";
 		public readonly static string TagFormat = " \"{0}\" = \"{1}\"";
@@ -531,6 +556,7 @@ namespace AmplifyShaderEditor
 		public readonly static string[] ShaderInvalidChars = { "\r", "\n", "\\", "\'", "\"", };
 		public readonly static string[] EnumInvalidChars = { "\r", "\n", "\\", ".", ">", ",", "<", "\'", "\"", ";", ":", "[", "{", "]", "}", "=", "+", "`", "~", "/", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-" };
 		public readonly static string[] AttrInvalidChars = { "\r", "\n", "\\", ">", "<", "\'", "\"", ";", ":", "[", "{", "]", "}", "=", "+", "`", "~", "/", "?", "!", "@", "#", "$", "%", "^", "&", "*" };
+		public readonly static string[] HeaderInvalidChars = { "\r", "\n", "\\", ">", ",", "<", "\'", "\"", ";", ":", "[", "{", "]", "}", "=", "+", "`", "~", "/", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-" };
 
 		public readonly static string[] WikiInvalidChars = { "#", "<", ">", "[", "]", "|", "{", "}", "%", "+", "?", "\\", "/", ",", ";", "." };
 
